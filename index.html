@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f3f2ec">
+    <title>지뢰찾기 | FIELD NOTES</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="script.js" defer></script>
+  </head>
+  <body>
+    <main class="game-shell">
+      <header class="masthead">
+        <div class="wordmark"><span class="wordmark-mark" aria-hidden="true">✳</span> FIELD NOTES <span class="edition">NO. 09</span></div>
+        <p class="masthead-note">작은 칸 안에 숨은 위험을 찾아내세요.</p>
+      </header>
+
+      <section class="game-panel" aria-labelledby="game-title">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">CLASSIC / 001</p>
+            <h1 id="game-title">지뢰찾기<span class="title-dot">.</span></h1>
+          </div>
+          <button class="reset-button" id="reset-button" type="button" aria-label="새 게임 시작" title="새 게임 시작">🙂</button>
+        </div>
+
+        <div class="dashboard" aria-label="게임 정보">
+          <div class="readout">
+            <span class="readout-label">남은 지뢰</span>
+            <output class="readout-value" id="mine-counter" aria-live="polite">010</output>
+          </div>
+          <div class="readout readout-time">
+            <span class="readout-label">경과 시간</span>
+            <output class="readout-value" id="timer" aria-live="off">000</output>
+          </div>
+        </div>
+
+        <div class="status-line" id="game-status" role="status" aria-live="polite">첫 칸을 열어 게임을 시작하세요.</div>
+
+        <div class="board-frame">
+          <div class="board" id="board" role="grid" aria-label="9 곱하기 9 지뢰찾기 게임판"></div>
+        </div>
+
+        <div class="controls-row">
+          <span class="control-hint">칸을 여세요</span>
+          <div class="mode-switch" role="group" aria-label="칸 조작 모드">
+            <button class="mode-button is-active" type="button" data-mode="reveal" aria-pressed="true">열기</button>
+            <button class="mode-button" type="button" data-mode="flag" aria-pressed="false">⚑ 깃발</button>
+          </div>
+        </div>
+      </section>
+
+      <footer class="page-footer">
+        <span>9 × 9 FIELD</span>
+        <span>10 HIDDEN MINES</span>
+        <span>STAY SHARP <span class="footer-star" aria-hidden="true">✳</span></span>
+      </footer>
+    </main>
+  </body>
+</html>
