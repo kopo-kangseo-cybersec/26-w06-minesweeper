@@ -1,0 +1,54 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>지뢰찾기</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="script.js" defer></script>
+</head>
+<body>
+  <main class="game">
+    <header class="game-header">
+      <h1>💣 지뢰찾기</h1>
+      <p>지뢰를 피해 모든 안전한 칸을 열어 보세요!</p>
+    </header>
+
+    <section class="controls">
+      <label for="difficulty">난이도</label>
+      <select id="difficulty">
+        <option value="beginner">초급 (9×9 · 지뢰 10개)</option>
+        <option value="intermediate">중급 (16×16 · 지뢰 40개)</option>
+        <option value="advanced">상급 (30×16 · 지뢰 99개)</option>
+      </select>
+      <button id="restart" type="button">새 게임</button>
+    </section>
+
+    <section class="status">
+      <div class="status-item">
+        <span>🚩 남은 지뢰</span>
+        <strong id="mine-counter">10</strong>
+      </div>
+      <div class="status-item">
+        <span>⏱ 시간</span>
+        <strong id="timer">00:00</strong>
+      </div>
+    </section>
+
+    <p id="message" role="status" aria-live="polite">
+      칸을 클릭해서 게임을 시작하세요!
+    </p>
+
+    <div class="board-viewport">
+      <div id="board" class="board"></div>
+    </div>
+
+    <footer class="instructions">
+      <p>🖱️ 좌클릭: 칸 열기</p>
+      <p>🚩 우클릭: 깃발 표시 및 해제</p>
+      <p>🔢 열린 숫자 칸 클릭: 주변 칸 빠르게 열기</p>
+    </footer>
+  </main>
+</body>
+</html>
