@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>지뢰찾기</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="script.js" defer></script>
+</head>
+<body>
+  <main class="game">
+    <header class="game-header">
+      <div>
+        <p class="eyebrow">MINESWEEPER</p>
+        <h1>지뢰찾기</h1>
+      </div>
+      <label class="difficulty-picker">
+        <span>난이도</span>
+        <select id="difficulty-select" aria-label="난이도 선택">
+          <option value="beginner">초급</option>
+          <option value="intermediate">중급</option>
+          <option value="expert">고급</option>
+        </select>
+      </label>
+    </header>
+
+    <section class="status-panel" aria-label="게임 상태">
+      <div class="status-item">
+        <span class="status-label">MINES</span>
+        <strong id="mine-counter">010</strong>
+      </div>
+      <button id="restart-button" class="restart-button" type="button" aria-label="새 게임 시작">🙂</button>
+      <div class="status-item status-item-right">
+        <span class="status-label">TIME</span>
+        <strong id="timer">000</strong>
+      </div>
+    </section>
+
+    <div id="game-message" class="game-message" role="status" aria-live="polite">첫 칸을 열어 게임을 시작하세요.</div>
+    <div class="board-shell">
+      <div id="game-board" class="game-board" role="grid" aria-label="9x9 지뢰찾기 게임 보드"></div>
+    </div>
+    <p class="help-text">좌클릭: 칸 열기 · 우클릭: 깃발 꽂기/해제</p>
+  </main>
+</body>
+</html>
