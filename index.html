@@ -15,24 +15,21 @@
       <p>지뢰를 피해 모든 안전한 칸을 열어 보세요!</p>
     </header>
 
-    <section class="controls" aria-label="게임 설정">
+    <section class="controls">
       <label for="difficulty">난이도</label>
-
       <select id="difficulty">
-        <option value="beginner">초급 (9×9, 지뢰 10개)</option>
-        <option value="intermediate">중급 (16×16, 지뢰 40개)</option>
-        <option value="advanced">상급 (30×16, 지뢰 99개)</option>
+        <option value="beginner">초급 (9×9 · 지뢰 10개)</option>
+        <option value="intermediate">중급 (16×16 · 지뢰 40개)</option>
+        <option value="advanced">상급 (30×16 · 지뢰 99개)</option>
       </select>
-
       <button id="restart" type="button">새 게임</button>
     </section>
 
-    <section class="status" aria-label="게임 상태">
+    <section class="status">
       <div class="status-item">
         <span>🚩 남은 지뢰</span>
         <strong id="mine-counter">10</strong>
       </div>
-
       <div class="status-item">
         <span>⏱ 시간</span>
         <strong id="timer">00:00</strong>
@@ -40,11 +37,11 @@
     </section>
 
     <p id="message" role="status" aria-live="polite">
-      시작 영역이 공개되었습니다. 게임을 시작하세요!
+      칸을 클릭해서 게임을 시작하세요!
     </p>
 
     <div class="board-viewport">
-      <div id="board" class="board" aria-label="지뢰찾기 게임판"></div>
+      <div id="board" class="board"></div>
     </div>
 
     <footer class="instructions">

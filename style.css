@@ -2,10 +2,6 @@
 :root {
   --cell-size: 30px;
   --cell-gap: 2px;
-  --blue: #3478c8;
-  --background: #e7edf5;
-  --panel: #ffffff;
-  --text: #283443;
 }
 
 * {
@@ -19,24 +15,25 @@ body {
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  background: var(--background);
-  color: var(--text);
+  background: #e7edf5;
+  color: #283443;
   font-family: Arial, "Malgun Gothic", sans-serif;
 }
 
 .game {
-  width: max-content;
+  width: fit-content;
   max-width: 100%;
-  padding: 24px;
-  background: var(--panel);
+  min-width: 0;
+  padding: 22px;
+  background: #fff;
   border: 1px solid #d2d9e3;
-  border-radius: 14px;
-  box-shadow: 0 6px 22px #24364b18;
+  border-radius: 12px;
+  box-shadow: 0 5px 20px #24364b18;
 }
 
 .game-header {
-  text-align: center;
   margin-bottom: 20px;
+  text-align: center;
 }
 
 .game-header h1 {
@@ -59,31 +56,29 @@ body {
 }
 
 .controls label {
+  font-size: 14px;
   font-weight: bold;
-  font-size: 14px;
 }
 
-select,
-#restart {
-  min-height: 38px;
-  border-radius: 6px;
-  font-size: 14px;
-}
-
-select {
+.controls select {
   flex: 1;
-  min-width: 190px;
-  padding: 7px 9px;
+  min-width: 0;
+  max-width: 100%;
+  padding: 9px;
   border: 1px solid #cbd3de;
-  background: white;
-  color: var(--text);
+  border-radius: 6px;
+  background: #fff;
+  color: #283443;
+  font-size: 14px;
 }
 
 #restart {
-  padding: 8px 15px;
+  padding: 10px 14px;
   border: none;
-  background: var(--blue);
-  color: white;
+  border-radius: 6px;
+  background: #3478c8;
+  color: #fff;
+  font-size: 14px;
   font-weight: bold;
   cursor: pointer;
 }
@@ -100,10 +95,10 @@ select {
 
 .status-item {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
   gap: 8px;
-  padding: 12px;
+  padding: 11px;
   border: 1px solid #e0e5eb;
   border-radius: 7px;
   background: #f8fafc;
@@ -127,11 +122,14 @@ select {
   line-height: 1.5;
 }
 
+/* 실제 보드 크기에 맞추고, 큰 보드만 스크롤 */
 .board-viewport {
-  max-width: calc(100vw - 48px);
+  display: block;
+  width: fit-content;
+  max-width: 100%;
   max-height: 68vh;
-  overflow: auto;
   margin: 0 auto;
+  overflow: auto;
   border: 1px solid #9ba4af;
   background: #a8b0ba;
 }
@@ -147,6 +145,9 @@ select {
 }
 
 .cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: var(--cell-size);
   height: var(--cell-size);
   padding: 0;
@@ -154,10 +155,9 @@ select {
   border-radius: 0;
   background: #cbd2da;
   color: #17212e;
-  font-size: 17px;
+  font-size: 16px;
   font-weight: bold;
   line-height: 1;
-  text-align: center;
   cursor: pointer;
 }
 
@@ -190,14 +190,14 @@ select {
 .num-4 { color: #4338ca; }
 .num-5 { color: #92400e; }
 .num-6 { color: #0891b2; }
-.num-7 { color: #222222; }
+.num-7 { color: #222; }
 .num-8 { color: #64748b; }
 
 .instructions {
   margin-top: 16px;
   color: #667386;
   font-size: 12px;
-  line-height: 1.4;
+  line-height: 1.5;
 }
 
 .instructions p {
@@ -215,9 +215,7 @@ select {
   }
 
   .game {
-    max-width: 100%;
     padding: 14px 10px;
-    border-radius: 10px;
   }
 
   .game-header h1 {
@@ -232,12 +230,13 @@ select {
     width: 100%;
   }
 
-  select {
-    min-width: 0;
+  .controls select {
+    width: 100%;
+    flex-basis: 100%;
   }
 
   .board-viewport {
-    max-width: calc(100vw - 44px);
+    max-width: 100%;
     max-height: 65vh;
   }
 

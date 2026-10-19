@@ -1,4 +1,7 @@
 
+"use strict";
+
+// 난이도 설정
 const DIFFICULTIES = {
   beginner: {
     rows: 9,
@@ -17,6 +20,7 @@ const DIFFICULTIES = {
   }
 };
 
+// HTML 요소
 const boardElement = document.getElementById("board");
 const difficultyElement = document.getElementById("difficulty");
 const restartButton = document.getElementById("restart");
@@ -24,21 +28,19 @@ const mineCounterElement = document.getElementById("mine-counter");
 const timerElement = document.getElementById("timer");
 const messageElement = document.getElementById("message");
 
+// 게임 상태
 let settings;
 let board = [];
-
 let flags = 0;
 let openedSafeCount = 0;
-
 let seconds = 0;
 let timerId = null;
 let timerStarted = false;
-
-let firstMove = true;
+let firstClick = true;
 let gameOver = false;
 
 
-// 게임 시작 또는 다시 시작
+// 새 게임 시작
 function startGame() {
   clearInterval(timerId);
   timerId = null;
@@ -49,19 +51,14 @@ function startGame() {
   openedSafeCount = 0;
   seconds = 0;
   timerStarted = false;
-  firstMove = true;
+  firstClick = true;
   gameOver = false;
 
   timerElement.textContent = "00:00";
   mineCounterElement.textContent = settings.mines;
+  messageElement.textContent = "칸을 클릭해서 게임을 시작하세요!";
 
-  messageElement.textContent =
-    "시작 영역이 공개되었습니다. 첫 번째 닫힌 칸은 안전하게 열립니다.";
-
-  boardElement.innerHTML = "";
-  boardElement.style.setProperty("--cols", settings.cols);
-
-  // 보드의 모든 칸 초기화
+  // 보드 초기화
   board = Array.from(
     { length: settings.rows },
     () =>
@@ -76,81 +73,91 @@ function startGame() {
       )
   );
 
+  // 모든 칸을 닫힌 상태로 생성
+  boardElement.replaceChildren();
+  boardElement.style.setProperty("--cols", settings.cols);
+
   createBoardElements();
-
-  // 시작 영역 주변에는 지뢰를 배치하지 않음
-  const startR = Math.floor(settings.rows / 2);
-  const startC = Math.floor(settings.cols / 2);
-
-  placeMines(startR, startC);
-  calculateNumbers();
-
-  // 게임을 시작하면 중앙의 3×3 영역을 자동 공개
-  revealStartingArea(startR, startC);
-
   updateMineCounter();
 }
 
 
-// 게임판 버튼 생성
+// 게임판의 버튼 생성
 function createBoardElements() {
+  const fragment = document.createDocumentFragment();
+
   for (let r = 0; r < settings.rows; r++) {
     for (let c = 0; c < settings.cols; c++) {
-      const cellElement = document.createElement("button");
+      const element = document.createElement("button");
 
-      cellElement.type = "button";
-      cellElement.className = "cell";
-      cellElement.dataset.row = r;
-      cellElement.dataset.col = c;
+      element.type = "button";
+      element.className = "cell";
+      element.setAttribute("aria-label", `${r + 1}행 ${c + 1}열`);
 
-      cellElement.addEventListener("click", () => {
+      element.addEventListener("click", () => {
         openCell(r, c);
       });
 
-      // 우클릭으로 깃발 표시
-      cellElement.addEventListener("contextmenu", (event) => {
+      // 우클릭: 깃발 표시 및 해제
+      element.addEventListener("contextmenu", (event) => {
         event.preventDefault();
         toggleFlag(r, c);
       });
 
-      boardElement.appendChild(cellElement);
+      fragment.appendChild(element);
     }
   }
+
+  boardElement.appendChild(fragment);
 }
 
 
-// 지뢰 무작위 배치
+// 지뢰 배치
+// 첫 클릭한 칸과 주변 8칸, 이미 깃발이 있는 칸은 제외
 function placeMines(safeR, safeC) {
-  let placed = 0;
+  const candidates = [];
 
-  while (placed < settings.mines) {
-    const r = Math.floor(Math.random() * settings.rows);
-    const c = Math.floor(Math.random() * settings.cols);
+  for (let r = 0; r < settings.rows; r++) {
+    for (let c = 0; c < settings.cols; c++) {
+      const inSafeArea =
+        Math.abs(r - safeR) <= 1 &&
+        Math.abs(c - safeC) <= 1;
 
-    // 시작 지점과 주변 8칸은 안전하게 유지
-    if (
-      Math.abs(r - safeR) <= 1 &&
-      Math.abs(c - safeC) <= 1
-    ) {
-      continue;
+      if (inSafeArea) {
+        continue;
+      }
+
+      if (board[r][c].flagged) {
+        continue;
+      }
+
+      candidates.push({ r, c });
     }
+  }
 
-    if (board[r][c].mine) {
-      continue;
+  // 후보 위치를 무작위로 섞기
+  for (let i = candidates.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [candidates[i], candidates[j]] =
+      [candidates[j], candidates[i]];
+  }
+
+  // 설정된 수만큼 지뢰 배치
+  for (let i = 0; i < settings.mines; i++) {
+    const position = candidates[i];
+
+    if (position) {
+      board[position.r][position.c].mine = true;
     }
-
-    board[r][c].mine = true;
-    placed++;
   }
 }
 
 
-// 각 칸 주변의 지뢰 수 계산
+// 각 칸 주변의 지뢰 개수 계산
 function calculateNumbers() {
   for (let r = 0; r < settings.rows; r++) {
     for (let c = 0; c < settings.cols; c++) {
       const cell = board[r][c];
-
       cell.number = 0;
 
       if (cell.mine) {
@@ -166,7 +173,10 @@ function calculateNumbers() {
           const nr = r + dr;
           const nc = c + dc;
 
-          if (isInsideBoard(nr, nc) && board[nr][nc].mine) {
+          if (
+            isInsideBoard(nr, nc) &&
+            board[nr][nc].mine
+          ) {
             cell.number++;
           }
         }
@@ -187,13 +197,13 @@ function isInsideBoard(r, c) {
 }
 
 
-// 게임판의 특정 버튼 가져오기
+// 게임판 버튼 가져오기
 function getCellElement(r, c) {
   return boardElement.children[r * settings.cols + c];
 }
 
 
-// 특정 칸의 화면 갱신
+// 칸 화면 갱신
 function renderCell(r, c) {
   const cell = board[r][c];
   const element = getCellElement(r, c);
@@ -228,41 +238,18 @@ function renderCell(r, c) {
   if (cell.flagged) {
     element.classList.add("flagged");
     element.textContent = "🚩";
-    element.setAttribute("aria-label", `${position}, 깃발 표시`);
+    element.setAttribute("aria-label", `${position}, 깃발`);
   } else {
     element.setAttribute("aria-label", `${position}, 닫힌 칸`);
   }
 }
 
 
-// 모든 칸의 화면 갱신
+// 전체 보드 화면 갱신
 function renderAllCells() {
   for (let r = 0; r < settings.rows; r++) {
     for (let c = 0; c < settings.cols; c++) {
       renderCell(r, c);
-    }
-  }
-}
-
-
-// 게임 시작 시 중앙 영역 자동 공개
-function revealStartingArea(centerR, centerC) {
-  for (let dr = -1; dr <= 1; dr++) {
-    for (let dc = -1; dc <= 1; dc++) {
-      const r = centerR + dr;
-      const c = centerC + dc;
-
-      if (!isInsideBoard(r, c)) {
-        continue;
-      }
-
-      const cell = board[r][c];
-
-      if (!cell.opened && !cell.mine) {
-        cell.opened = true;
-        openedSafeCount++;
-        renderCell(r, c);
-      }
     }
   }
 }
@@ -283,7 +270,7 @@ function startTimer() {
 }
 
 
-// 초를 분:초 형식으로 변환
+// 초를 분:초로 표시
 function formatTime(totalSeconds) {
   const minutes = Math.floor(totalSeconds / 60);
   const remainingSeconds = totalSeconds % 60;
@@ -296,123 +283,48 @@ function formatTime(totalSeconds) {
 }
 
 
-// 첫 번째 닫힌 칸 클릭을 빈 칸으로 보호
-function protectFirstClick(r, c) {
-  let movedMines = 0;
-
-  // 클릭한 칸과 주변의 지뢰를 제거
-  for (let dr = -1; dr <= 1; dr++) {
-    for (let dc = -1; dc <= 1; dc++) {
-      const nr = r + dr;
-      const nc = c + dc;
-
-      if (!isInsideBoard(nr, nc)) {
-        continue;
-      }
-
-      if (board[nr][nc].mine) {
-        board[nr][nc].mine = false;
-        movedMines++;
-      }
-    }
-  }
-
-  // 주변에 지뢰가 없었다면 이동할 필요 없음
-  if (movedMines === 0) {
-    return;
-  }
-
-  // 새 지뢰를 놓을 수 있는 칸 찾기
-  const candidates = [];
-
-  for (let nr = 0; nr < settings.rows; nr++) {
-    for (let nc = 0; nc < settings.cols; nc++) {
-      // 클릭 지점 주변에는 지뢰를 놓지 않음
-      if (
-        Math.abs(nr - r) <= 1 &&
-        Math.abs(nc - c) <= 1
-      ) {
-        continue;
-      }
-
-      const cell = board[nr][nc];
-
-      // 이미 열려 있는 안전 칸에는 지뢰를 놓을 수 없음
-      if (!cell.mine && !cell.opened) {
-        candidates.push({ r: nr, c: nc });
-      }
-    }
-  }
-
-  // 후보 칸을 무작위 순서로 섞기
-  for (let i = candidates.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
-  }
-
-  // 제거한 지뢰 수만큼 다른 위치에 배치
-  for (let i = 0; i < movedMines; i++) {
-    const position = candidates[i];
-
-    if (position) {
-      board[position.r][position.c].mine = true;
-    }
-  }
-
-  // 변경된 지뢰 배치에 맞춰 숫자 다시 계산
-  calculateNumbers();
-
-  // 이미 공개된 시작 영역의 숫자도 갱신
-  renderAllCells();
-}
-
-
 // 칸 열기
 function openCell(r, c) {
   if (gameOver) {
     return;
   }
 
-  let cell = board[r][c];
+  const cell = board[r][c];
 
-  // 열린 숫자 칸을 다시 클릭하면 주변 칸 빠르게 열기
+  // 이미 열린 숫자 칸을 클릭하면 빠른 열기
   if (cell.opened) {
-    if (!cell.mine && cell.number > 0) {
-      startTimer();
-
-      // 숫자 칸 빠른 열기는 첫 번째 일반 칸 열기와 구분
-      firstMove = false;
-
+    if (cell.number > 0) {
       openAroundNumber(r, c);
     }
-
     return;
   }
 
-  // 깃발이 꽂힌 칸은 열지 않음
+  // 깃발이 있는 칸은 열지 않음
   if (cell.flagged) {
     return;
   }
 
-  startTimer();
+  // 첫 좌클릭 때만 지뢰 배치
+  if (firstClick) {
+    placeMines(r, c);
+    calculateNumbers();
+    firstClick = false;
 
-  // 첫 번째 닫힌 칸은 반드시 빈 칸이 되도록 처리
-  if (firstMove) {
-    protectFirstClick(r, c);
-    firstMove = false;
-
-    cell = board[r][c];
+    messageElement.textContent = "게임 진행 중...";
   }
 
-  // 지뢰를 열었다면 패배
-  if (cell.mine) {
-    cell.opened = true;
-    renderCell(r, c);
+  startTimer();
+
+  const currentCell = board[r][c];
+
+  // 지뢰를 열면 패배
+  if (currentCell.mine) {
+    currentCell.opened = true;
     endGame(false);
     return;
   }
 
-  // 빈 영역과 주변 숫자 칸 자동 공개
+  // 빈 영역과 주변 숫자 칸 공개
   revealArea(r, c);
 
   checkWin();
@@ -441,7 +353,7 @@ function revealArea(startR, startC) {
 
     renderCell(r, c);
 
-    // 주변 지뢰가 없는 칸이면 주변 칸들도 연쇄적으로 확인
+    // 주변 지뢰가 없는 칸이면 인접한 칸도 확인
     if (cell.number === 0) {
       for (let dr = -1; dr <= 1; dr++) {
         for (let dc = -1; dc <= 1; dc++) {
@@ -469,7 +381,12 @@ function toggleFlag(r, c) {
     return;
   }
 
-  startTimer();
+  // 지뢰 개수 이상으로 깃발을 꽂지 않도록 제한
+  if (!cell.flagged && flags >= settings.mines) {
+    messageElement.textContent =
+      "표시할 수 있는 깃발을 모두 사용했습니다.";
+    return;
+  }
 
   cell.flagged = !cell.flagged;
 
@@ -490,12 +407,12 @@ function updateMineCounter() {
 }
 
 
-// 열린 숫자 칸 주변 자동 열기
+// 열린 숫자 칸 주변의 빠른 열기
 function openAroundNumber(r, c) {
   const number = board[r][c].number;
   let flagCount = 0;
 
-  // 주변 깃발 수 세기
+  // 주변 깃발 수 계산
   for (let dr = -1; dr <= 1; dr++) {
     for (let dc = -1; dc <= 1; dc++) {
       if (dr === 0 && dc === 0) {
@@ -519,7 +436,9 @@ function openAroundNumber(r, c) {
     return;
   }
 
-  // 주변의 닫힌 칸 중 깃발이 없는 칸 열기
+  // 열 대상 칸을 먼저 모음
+  const cellsToOpen = [];
+
   for (let dr = -1; dr <= 1; dr++) {
     for (let dc = -1; dc <= 1; dc++) {
       if (dr === 0 && dc === 0) {
@@ -536,20 +455,31 @@ function openAroundNumber(r, c) {
       const neighbor = board[nr][nc];
 
       if (!neighbor.opened && !neighbor.flagged) {
-        openCell(nr, nc);
-
-        // 지뢰를 열어 게임이 끝났으면 즉시 중단
-        if (gameOver) {
-          return;
-        }
+        cellsToOpen.push([nr, nc]);
       }
     }
   }
+
+  // 주변의 미개봉 칸 열기
+  for (const [nr, nc] of cellsToOpen) {
+    openCell(nr, nc);
+
+    // 지뢰를 열거나 승리해서 종료됐다면 중단
+    if (gameOver) {
+      return;
+    }
+  }
+
+  checkWin();
 }
 
 
-// 승리 조건 확인
+// 승리 여부 확인
 function checkWin() {
+  if (gameOver) {
+    return;
+  }
+
   const totalSafeCells =
     settings.rows * settings.cols - settings.mines;
 
@@ -559,7 +489,7 @@ function checkWin() {
 }
 
 
-// 게임 종료 처리
+// 게임 종료
 function endGame(won) {
   if (gameOver) {
     return;
@@ -570,7 +500,7 @@ function endGame(won) {
   clearInterval(timerId);
   timerId = null;
 
-  // 게임 종료 시 모든 지뢰 위치 공개
+  // 게임 종료 시 모든 지뢰 공개
   for (let r = 0; r < settings.rows; r++) {
     for (let c = 0; c < settings.cols; c++) {
       if (board[r][c].mine) {
@@ -586,15 +516,14 @@ function endGame(won) {
       `🎉 승리했습니다! 기록: ${formatTime(seconds)}`;
   } else {
     messageElement.textContent =
-      "💥 지뢰를 밟았습니다. 새 게임 버튼을 눌러 다시 도전하세요!";
+      "💥 지뢰를 밟았습니다! 새 게임으로 다시 도전하세요.";
   }
 }
 
 
-// 버튼 및 난이도 변경 이벤트
+// 버튼 이벤트
 restartButton.addEventListener("click", startGame);
-
 difficultyElement.addEventListener("change", startGame);
 
-// 최초 실행
+// 최초 게임 실행
 startGame();
