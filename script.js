@@ -33,7 +33,7 @@ let suppressNextClick = false;
 let suppressNextContextMenu = false;
 
 function formatCounter(value) {
-  return value < 0 ? `-${String(Math.abs(value)).padStart(2, '0')}` : String(value).padStart(2, '0');
+  return value < 0 ? `-${String(Math.abs(value)).padStart(2, '0')}` : String(value).padStart(3, '0');
 }
 
 function formatTime(value) {
@@ -46,7 +46,7 @@ function formatDimensions(columns, rows) {
 
 function updateBoardSizing() {
   const availableWidth = Math.min(window.innerWidth - 72, 440);
-  const cellSize = Math.max(16, Math.min(42, Math.floor(availableWidth / boardConfig.columns)));
+  const cellSize = Math.max(16, Math.min(26, Math.floor(availableWidth / boardConfig.columns)));
   boardElement.style.setProperty('--columns', boardConfig.columns);
   boardElement.style.setProperty('--cell-size', `${cellSize}px`);
   boardElement.style.setProperty('--cell-font-size', `${Math.max(10, Math.min(17, Math.floor(cellSize * 0.46)))}px`);

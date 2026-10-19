@@ -12,18 +12,16 @@
     <main class="game-shell">
       <header class="masthead">
         <a class="wordmark" href="./" aria-label="Field 09 처음으로">
-          <span class="wordmark-mark" aria-hidden="true">✳</span>
-          <span>FIELD<span class="wordmark-number">09</span></span>
+          <span class="wordmark-mark" aria-hidden="true">💣</span>
+          <h1 id="game-title">지뢰찾기</h1>
         </a>
-        <span class="edition">MINESWEEPER CLUB <span>·</span> NO. 001</span>
+        <div class="window-actions" aria-hidden="true"><span>_</span><span>□</span><span>×</span></div>
       </header>
 
-      <section class="game-panel" aria-labelledby="game-title">
+      <nav class="menu-bar" aria-label="게임 메뉴"><span>게임</span><span>도움말</span></nav>
+
+      <section class="game-panel" aria-label="지뢰찾기 게임">
         <div class="game-heading">
-          <div>
-            <p class="eyebrow">오늘의 탐사 구역</p>
-            <h1 id="game-title">지뢰찾기<span class="title-period">.</span></h1>
-          </div>
           <label class="sr-only" for="difficulty-select">난이도</label>
           <select class="difficulty-select" id="difficulty-select">
             <option value="beginner">초급 · 9 × 9</option>
