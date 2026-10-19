@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#3b3b3b" />
+    <title>지뢰찾기</title>
+    <link rel="stylesheet" href="style.css" />
+    <script src="script.js" defer></script>
+  </head>
+  <body>
+    <main class="game">
+      <section class="game-panel" aria-label="지뢰찾기 게임">
+        <header class="window-titlebar">
+          <span class="window-icon" aria-hidden="true">💣</span>
+          <h1>지뢰찾기</h1>
+          <span class="window-caption">MINESWEEPER</span>
+        </header>
+
+        <div class="difficulty-control">
+          <span class="difficulty-label">난이도 선택</span>
+          <div class="difficulty-buttons" role="group" aria-label="난이도 선택">
+            <button type="button" data-difficulty="beginner" aria-pressed="true">초급</button>
+            <button type="button" data-difficulty="intermediate" aria-pressed="false">중급</button>
+            <button type="button" data-difficulty="expert" aria-pressed="false">고급</button>
+          </div>
+        </div>
+
+        <div class="game-toolbar">
+          <div class="counter" aria-label="남은 지뢰 수">
+            <span id="mine-count" class="counter-value">010</span>
+          </div>
+          <button id="restart-button" class="restart-button" type="button" aria-label="새 게임 시작">🙂</button>
+          <div class="counter" aria-label="경과 시간">
+            <span id="timer" class="counter-value">000</span>
+          </div>
+        </div>
+
+        <p id="game-message" class="game-message" aria-live="polite">왼쪽 클릭으로 칸을 열고, 오른쪽 클릭으로 깃발을 표시하세요.</p>
+        <div class="board-viewport">
+          <div id="board" class="board" aria-label="9 곱하기 9 게임판"></div>
+        </div>
+        <div class="legend" aria-label="조작 방법">
+          <span>좌클릭: 칸 열기</span>
+          <span>우클릭: 깃발</span>
+          <span>좌우 동시: 주변 열기</span>
+        </div>
+        <footer id="game-details">초급 · 9 × 9 · 지뢰 10개</footer>
+      </section>
+    </main>
+  </body>
+</html>
