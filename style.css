@@ -1,0 +1,125 @@
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #dce6f1;
+  font-family: Arial, sans-serif;
+}
+
+.game {
+  width: max-content;
+  max-width: 100%;
+  padding: 24px;
+  text-align: center;
+  background: #f5f5f5;
+  border: 2px solid #aaa;
+  border-radius: 12px;
+  box-shadow: 0 5px 15px #0002;
+}
+
+h1 {
+  margin: 0 0 20px;
+  color: #333;
+}
+
+.info {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+  font-weight: bold;
+}
+
+#message {
+  min-height: 24px;
+  margin: 12px 0;
+}
+
+.board {
+  display: grid;
+  grid-template-columns: repeat(9, 32px);
+  gap: 2px;
+  padding: 4px;
+  background: #999;
+  border: 2px solid #777;
+}
+
+.cell {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 2px outset #eee;
+  background: #c8c8c8;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.cell.open {
+  border: 1px solid #aaa;
+  background: #eee;
+  cursor: default;
+}
+
+.cell.mine {
+  background: #ff8b8b;
+}
+
+.cell.flagged {
+  color: #d00;
+}
+
+.cell:disabled {
+  opacity: 1;
+}
+
+.num-1 { color: blue; }
+.num-2 { color: green; }
+.num-3 { color: red; }
+.num-4 { color: darkblue; }
+.num-5 { color: brown; }
+.num-6 { color: teal; }
+.num-7 { color: black; }
+.num-8 { color: gray; }
+
+#restart {
+  margin-top: 18px;
+  padding: 9px 20px;
+  border: none;
+  border-radius: 6px;
+  background: #3478c8;
+  color: white;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+#restart:hover {
+  background: #245b9b;
+}
+
+@media (max-width: 360px) {
+  .game {
+    padding: 12px;
+  }
+
+  .board {
+    grid-template-columns: repeat(9, 28px);
+  }
+
+  .cell {
+    width: 28px;
+    height: 28px;
+  }
+
+  .info {
+    font-size: 13px;
+    gap: 8px;
+  }
+}
