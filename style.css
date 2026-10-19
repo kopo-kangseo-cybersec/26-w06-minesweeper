@@ -362,12 +362,20 @@ h1 {
   cursor: default;
 }
 
-.flag-mode-button {
+.mark-modes {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  margin: -2px 0 10px;
+}
+
+.flag-mode-button,
+.question-mode-button {
   display: flex;
   align-items: center;
   gap: 7px;
   min-height: 32px;
-  margin: -2px 0 10px auto;
+  margin: 0;
   padding: 0 9px;
   border: 1px solid var(--line);
   border-radius: 4px;
@@ -382,7 +390,15 @@ h1 {
   font-size: 15px;
 }
 
-.flag-mode-button kbd {
+.question-mode-button span {
+  color: #d3a83f;
+  font-family: 'DM Mono', 'Courier New', monospace;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.flag-mode-button kbd,
+.question-mode-button kbd {
   min-width: 22px;
   padding: 2px 4px;
   border-radius: 3px;
@@ -391,15 +407,24 @@ h1 {
   font: 9px 'DM Mono', 'Courier New', monospace;
 }
 
-.flag-mode-button[aria-pressed="true"] {
+.flag-mode-button[aria-pressed="true"],
+.question-mode-button[aria-pressed="true"] {
   border-color: var(--green);
   color: white;
   background: var(--green);
 }
 
-.flag-mode-button[aria-pressed="true"] kbd {
+.flag-mode-button[aria-pressed="true"] kbd,
+.question-mode-button[aria-pressed="true"] kbd {
   color: white;
   background: rgba(255, 255, 255, 0.2);
+}
+
+.cell.questioned {
+  color: #ffe39a;
+  font-family: 'DM Mono', 'Courier New', monospace;
+  font-size: var(--cell-font-size, 17px);
+  font-weight: 500;
 }
 
 .number-1 { color: #2776a2; }

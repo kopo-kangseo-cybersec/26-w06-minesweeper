@@ -56,9 +56,14 @@
           </div>
         </div>
 
-        <button class="flag-mode-button" id="flag-mode-button" type="button" aria-pressed="false">
-          <span aria-hidden="true">⚑</span> 깃발 모드 <kbd>끔</kbd>
-        </button>
+        <div class="mark-modes" aria-label="칸 표시 모드">
+          <button class="flag-mode-button" id="flag-mode-button" type="button" aria-pressed="false">
+            <span aria-hidden="true">⚑</span> 깃발 모드 <kbd>끔</kbd>
+          </button>
+          <button class="question-mode-button" id="question-mode-button" type="button" aria-pressed="false">
+            <span aria-hidden="true">?</span> 물음표 <kbd>끔</kbd>
+          </button>
+        </div>
 
         <div class="board-frame">
           <div class="board" id="board" role="grid" aria-label="9 곱하기 9 지뢰찾기 게임판"></div>

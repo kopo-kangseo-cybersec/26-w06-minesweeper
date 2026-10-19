@@ -13,6 +13,7 @@ const resetFaceElement = document.querySelector('#reset-face');
 const difficultySelect = document.querySelector('#difficulty-select');
 const customSettings = document.querySelector('#custom-settings');
 const flagModeButton = document.querySelector('#flag-mode-button');
+const questionModeButton = document.querySelector('#question-mode-button');
 const bestTimeElement = document.querySelector('#best-time');
 const boardSizeElement = document.querySelector('#board-size');
 
@@ -26,6 +27,7 @@ let timerId = null;
 let gameStarted = false;
 let gameOver = false;
 let flagMode = false;
+let questionMode = false;
 let longPressTimer = null;
 let suppressNextClick = false;
 let suppressNextContextMenu = false;
@@ -57,6 +59,7 @@ function createBoard() {
     isMine: false,
     isRevealed: false,
     isFlagged: false,
+    isQuestioned: false,
     adjacentMines: 0,
     element: document.createElement('button'),
   }));
@@ -77,6 +80,7 @@ function createBoard() {
         return;
       }
       if (flagMode) toggleFlag(cell.index);
+      else if (questionMode) toggleQuestion(cell.index);
       else revealCell(cell.index);
     });
 
@@ -231,10 +235,19 @@ function toggleFlag(index) {
   if (gameOver || cell.isRevealed) return;
 
   cell.isFlagged = !cell.isFlagged;
+  cell.isQuestioned = false;
   flagsPlaced += cell.isFlagged ? 1 : -1;
   mineCountElement.textContent = formatCounter(boardConfig.mines - flagsPlaced);
   renderCell(cell);
   messageElement.textContent = '주변을 살펴보고 안전한 칸을 찾아보세요.';
+}
+
+function toggleQuestion(index) {
+  const cell = cells[index];
+  if (gameOver || cell.isRevealed || cell.isFlagged) return;
+
+  cell.isQuestioned = !cell.isQuestioned;
+  renderCell(cell);
 }
 
 function chord(index) {
@@ -275,10 +288,13 @@ function renderCell(cell, wasHit = false) {
     return;
   }
 
-  element.textContent = cell.isFlagged ? '⚑' : '';
+  element.textContent = cell.isFlagged ? '⚑' : cell.isQuestioned ? '?' : '';
   if (cell.isFlagged) {
     element.classList.add('flagged');
     element.setAttribute('aria-label', `${row}행 ${column}열, 깃발 표시됨`);
+  } else if (cell.isQuestioned) {
+    element.classList.add('questioned');
+    element.setAttribute('aria-label', `${row}행 ${column}열, 물음표 표시됨`);
   } else {
     element.setAttribute('aria-label', `${row}행 ${column}열, 닫힘`);
   }
@@ -393,10 +409,23 @@ customSettings.addEventListener('submit', (event) => {
   resetGame();
 });
 
-flagModeButton.addEventListener('click', () => {
-  flagMode = !flagMode;
+function updateMarkModeButtons() {
   flagModeButton.setAttribute('aria-pressed', String(flagMode));
   flagModeButton.querySelector('kbd').textContent = flagMode ? '켬' : '끔';
+  questionModeButton.setAttribute('aria-pressed', String(questionMode));
+  questionModeButton.querySelector('kbd').textContent = questionMode ? '켬' : '끔';
+}
+
+flagModeButton.addEventListener('click', () => {
+  flagMode = !flagMode;
+  if (flagMode) questionMode = false;
+  updateMarkModeButtons();
+});
+
+questionModeButton.addEventListener('click', () => {
+  questionMode = !questionMode;
+  if (questionMode) flagMode = false;
+  updateMarkModeButtons();
 });
 
 resetButton.addEventListener('click', resetGame);
