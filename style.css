@@ -142,10 +142,81 @@ h1 {
   font-size: 11px;
 }
 
-.difficulty span {
-  padding-left: 9px;
-  border-left: 1px solid #cbdccf;
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  clip-path: inset(50%);
+}
+
+.difficulty-select {
+  max-width: 180px;
+  padding: 9px 27px 9px 10px;
+  border: 0;
+  border-radius: 4px;
+  color: var(--green-dark);
+  background: #edf5ef;
+  font-family: 'DM Mono', 'Courier New', monospace;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.difficulty-select:focus-visible,
+.custom-settings input:focus-visible,
+.custom-settings button:focus-visible,
+.flag-mode-button:focus-visible {
+  outline: 3px solid #f2a277;
+  outline-offset: 2px;
+}
+
+.custom-settings {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 8px;
+  margin: -10px 0 16px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: #f7faf7;
+}
+
+.custom-settings[hidden] {
+  display: none;
+}
+
+.custom-settings label {
+  display: grid;
+  gap: 4px;
   color: var(--muted);
+  font-family: 'DM Mono', 'Courier New', monospace;
+  font-size: 10px;
+}
+
+.custom-settings input {
+  width: 62px;
+  height: 32px;
+  padding: 4px 6px;
+  border: 1px solid #cbdccf;
+  border-radius: 3px;
+  color: var(--ink);
+  background: white;
+  font: 13px 'DM Mono', 'Courier New', monospace;
+}
+
+.custom-settings button {
+  min-height: 32px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 3px;
+  color: white;
+  background: var(--green);
+  cursor: pointer;
+  font-size: 12px;
 }
 
 .game-status {
@@ -200,7 +271,7 @@ h1 {
   color: #fff2cf;
   background: rgba(255, 255, 255, 0.1);
   cursor: pointer;
-  font-size: 23px;
+  font-size: 21px;
   line-height: 1;
   transition: transform 140ms ease, background 140ms ease;
 }
@@ -218,21 +289,25 @@ h1 {
 }
 
 .board-frame {
+  max-width: 100%;
   padding: 7px;
   border-radius: 5px;
   background: #dcebe0;
+  overflow: auto;
 }
 
 .board {
   display: grid;
-  grid-template-columns: repeat(9, minmax(0, 1fr));
-  gap: 3px;
-  width: 100%;
-  aspect-ratio: 1;
+  grid-template-columns: repeat(var(--columns, 9), var(--cell-size, 42px));
+  gap: 2px;
+  width: max-content;
+  margin: 0 auto;
 }
 
 .cell {
   display: grid;
+  width: var(--cell-size, 42px);
+  height: var(--cell-size, 42px);
   min-width: 0;
   min-height: 0;
   padding: 0;
@@ -243,7 +318,7 @@ h1 {
   background: #6f9e7d;
   box-shadow: inset 0 -3px 0 rgba(25, 61, 50, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.2);
   cursor: pointer;
-  font-size: clamp(12px, 4vw, 19px);
+  font-size: var(--cell-font-size, 17px);
   font-weight: 800;
   line-height: 1;
   transition: background 100ms ease, transform 100ms ease;
@@ -283,6 +358,50 @@ h1 {
   color: #a93f3f;
 }
 
+.cell:disabled {
+  cursor: default;
+}
+
+.flag-mode-button {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 32px;
+  margin: -2px 0 10px auto;
+  padding: 0 9px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  color: var(--green-dark);
+  background: white;
+  cursor: pointer;
+  font-size: 11px;
+}
+
+.flag-mode-button span {
+  color: var(--coral);
+  font-size: 15px;
+}
+
+.flag-mode-button kbd {
+  min-width: 22px;
+  padding: 2px 4px;
+  border-radius: 3px;
+  color: var(--muted);
+  background: #edf5ef;
+  font: 9px 'DM Mono', 'Courier New', monospace;
+}
+
+.flag-mode-button[aria-pressed="true"] {
+  border-color: var(--green);
+  color: white;
+  background: var(--green);
+}
+
+.flag-mode-button[aria-pressed="true"] kbd {
+  color: white;
+  background: rgba(255, 255, 255, 0.2);
+}
+
 .number-1 { color: #2776a2; }
 .number-2 { color: #348454; }
 .number-3 { color: #d26045; }
@@ -303,11 +422,30 @@ h1 {
   font-size: 12px;
 }
 
-.board-coordinate {
+.game-meta {
+  display: flex;
   flex: none;
+  align-items: center;
+  gap: 10px;
+}
+
+.best-record,
+.board-coordinate {
   color: #97a99c;
+  font-family: 'DM Mono', 'Courier New', monospace;
   font-size: 9px;
   letter-spacing: 0.4px;
+  white-space: nowrap;
+}
+
+.best-record b {
+  margin-left: 4px;
+  color: var(--green);
+  font-weight: 500;
+}
+
+.board-coordinate {
+  flex: none;
 }
 
 .board-coordinate b {
@@ -362,10 +500,6 @@ h1 {
     font-size: 26px;
   }
 
-  .board {
-    gap: 2px;
-  }
-
   .board-frame {
     padding: 5px;
   }
@@ -376,6 +510,18 @@ h1 {
 
   .board-coordinate {
     font-size: 8px;
+  }
+
+  .best-record {
+    font-size: 8px;
+  }
+
+  .game-meta {
+    gap: 6px;
+  }
+
+  .custom-settings {
+    gap: 6px;
   }
 }
 

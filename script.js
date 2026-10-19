@@ -1,5 +1,8 @@
-const BOARD_SIZE = 9;
-const MINE_TOTAL = 10;
+const DIFFICULTIES = {
+  beginner: { columns: 9, rows: 9, mines: 10, label: '초급' },
+  intermediate: { columns: 16, rows: 16, mines: 40, label: '중급' },
+  expert: { columns: 30, rows: 16, mines: 99, label: '고급' },
+};
 
 const boardElement = document.querySelector('#board');
 const mineCountElement = document.querySelector('#mine-count');
@@ -7,7 +10,14 @@ const timerElement = document.querySelector('#timer');
 const messageElement = document.querySelector('#game-message');
 const resetButton = document.querySelector('#reset-button');
 const resetFaceElement = document.querySelector('#reset-face');
+const difficultySelect = document.querySelector('#difficulty-select');
+const customSettings = document.querySelector('#custom-settings');
+const flagModeButton = document.querySelector('#flag-mode-button');
+const bestTimeElement = document.querySelector('#best-time');
+const boardSizeElement = document.querySelector('#board-size');
 
+let currentDifficulty = 'beginner';
+let boardConfig = { ...DIFFICULTIES.beginner };
 let cells = [];
 let flagsPlaced = 0;
 let revealedCount = 0;
@@ -15,10 +25,34 @@ let secondsElapsed = 0;
 let timerId = null;
 let gameStarted = false;
 let gameOver = false;
+let flagMode = false;
+let longPressTimer = null;
+let suppressNextClick = false;
+let suppressNextContextMenu = false;
+
+function formatCounter(value) {
+  return value < 0 ? `-${String(Math.abs(value)).padStart(2, '0')}` : String(value).padStart(2, '0');
+}
+
+function formatTime(value) {
+  return String(value).padStart(3, '0');
+}
+
+function formatDimensions(columns, rows) {
+  return `${String(columns).padStart(2, '0')} × ${String(rows).padStart(2, '0')}`;
+}
+
+function updateBoardSizing() {
+  const availableWidth = Math.min(window.innerWidth - 72, 440);
+  const cellSize = Math.max(16, Math.min(42, Math.floor(availableWidth / boardConfig.columns)));
+  boardElement.style.setProperty('--columns', boardConfig.columns);
+  boardElement.style.setProperty('--cell-size', `${cellSize}px`);
+  boardElement.style.setProperty('--cell-font-size', `${Math.max(10, Math.min(17, Math.floor(cellSize * 0.46)))}px`);
+}
 
 function createBoard() {
   boardElement.replaceChildren();
-  cells = Array.from({ length: BOARD_SIZE * BOARD_SIZE }, (_, index) => ({
+  cells = Array.from({ length: boardConfig.columns * boardConfig.rows }, (_, index) => ({
     index,
     isMine: false,
     isRevealed: false,
@@ -27,21 +61,93 @@ function createBoard() {
     element: document.createElement('button'),
   }));
 
+  updateBoardSizing();
+  boardElement.setAttribute('aria-label', `${boardConfig.columns}열 ${boardConfig.rows}행 지뢰찾기 게임판`);
+
   cells.forEach((cell) => {
-    const row = Math.floor(cell.index / BOARD_SIZE) + 1;
-    const column = (cell.index % BOARD_SIZE) + 1;
     cell.element.type = 'button';
     cell.element.className = 'cell';
     cell.element.setAttribute('role', 'gridcell');
-    cell.element.setAttribute('aria-label', `${row}행 ${column}열, 닫힘`);
     cell.element.dataset.index = cell.index;
-    cell.element.addEventListener('click', () => revealCell(cell.index));
+    renderCell(cell);
+
+    cell.element.addEventListener('click', () => {
+      if (suppressNextClick) {
+        suppressNextClick = false;
+        return;
+      }
+      if (flagMode) toggleFlag(cell.index);
+      else revealCell(cell.index);
+    });
+
     cell.element.addEventListener('contextmenu', (event) => {
       event.preventDefault();
-      toggleFlag(cell.index);
+      if (suppressNextContextMenu) {
+        suppressNextContextMenu = false;
+        return;
+      }
+      if (cell.isRevealed) chord(cell.index);
+      else toggleFlag(cell.index);
     });
+
+    cell.element.addEventListener('dblclick', (event) => {
+      event.preventDefault();
+      chord(cell.index);
+    });
+
+    cell.element.addEventListener('pointerdown', (event) => {
+      if (gameOver) return;
+      if (event.button === 0 || event.pointerType === 'touch') resetFaceElement.textContent = '😮';
+      if (event.pointerType === 'touch' && !cell.isRevealed) {
+        longPressTimer = window.setTimeout(() => {
+          toggleFlag(cell.index);
+          suppressNextClick = true;
+          suppressNextContextMenu = true;
+          longPressTimer = null;
+        }, 450);
+      }
+      if (event.pointerType === 'mouse' && event.buttons === 3 && cell.isRevealed) {
+        chord(cell.index);
+        suppressNextContextMenu = true;
+      }
+    });
+
+    cell.element.addEventListener('pointerup', stopLongPress);
+    cell.element.addEventListener('pointerleave', stopLongPress);
+    cell.element.addEventListener('pointercancel', stopLongPress);
     boardElement.append(cell.element);
   });
+
+  boardSizeElement.textContent = formatDimensions(boardConfig.columns, boardConfig.rows);
+}
+
+function stopLongPress() {
+  if (longPressTimer !== null) {
+    window.clearTimeout(longPressTimer);
+    longPressTimer = null;
+  }
+  if (!gameOver) resetFaceElement.textContent = '🙂';
+}
+
+function getNeighbors(index) {
+  const row = Math.floor(index / boardConfig.columns);
+  const column = index % boardConfig.columns;
+  const neighbors = [];
+
+  for (let rowOffset = -1; rowOffset <= 1; rowOffset += 1) {
+    for (let columnOffset = -1; columnOffset <= 1; columnOffset += 1) {
+      if (rowOffset === 0 && columnOffset === 0) continue;
+      const neighborRow = row + rowOffset;
+      const neighborColumn = column + columnOffset;
+      if (
+        neighborRow >= 0 && neighborRow < boardConfig.rows &&
+        neighborColumn >= 0 && neighborColumn < boardConfig.columns
+      ) {
+        neighbors.push(cells[neighborRow * boardConfig.columns + neighborColumn]);
+      }
+    }
+  }
+  return neighbors;
 }
 
 function placeMines(firstIndex) {
@@ -57,7 +163,7 @@ function placeMines(firstIndex) {
     ];
   }
 
-  availableIndices.slice(0, MINE_TOTAL).forEach((index) => {
+  availableIndices.slice(0, boardConfig.mines).forEach((index) => {
     cells[index].isMine = true;
   });
 
@@ -68,34 +174,16 @@ function placeMines(firstIndex) {
   });
 }
 
-function getNeighbors(index) {
-  const row = Math.floor(index / BOARD_SIZE);
-  const column = index % BOARD_SIZE;
-  const neighbors = [];
-
-  for (let rowOffset = -1; rowOffset <= 1; rowOffset += 1) {
-    for (let columnOffset = -1; columnOffset <= 1; columnOffset += 1) {
-      if (rowOffset === 0 && columnOffset === 0) continue;
-      const neighborRow = row + rowOffset;
-      const neighborColumn = column + columnOffset;
-      if (
-        neighborRow >= 0 && neighborRow < BOARD_SIZE &&
-        neighborColumn >= 0 && neighborColumn < BOARD_SIZE
-      ) {
-        neighbors.push(cells[neighborRow * BOARD_SIZE + neighborColumn]);
-      }
-    }
-  }
-
-  return neighbors;
-}
-
 function startTimer() {
   if (timerId !== null) return;
   gameStarted = true;
   timerId = window.setInterval(() => {
     secondsElapsed = Math.min(secondsElapsed + 1, 999);
-    timerElement.textContent = String(secondsElapsed).padStart(3, '0');
+    timerElement.textContent = formatTime(secondsElapsed);
+    if (secondsElapsed === 999) {
+      window.clearInterval(timerId);
+      timerId = null;
+    }
   }, 1000);
 }
 
@@ -116,9 +204,7 @@ function revealCell(index) {
   }
 
   revealSafeArea(cell);
-  if (revealedCount === cells.length - MINE_TOTAL) {
-    finishGame(true);
-  }
+  checkVictory();
 }
 
 function revealSafeArea(startCell) {
@@ -144,22 +230,32 @@ function toggleFlag(index) {
   const cell = cells[index];
   if (gameOver || cell.isRevealed) return;
 
-  if (!cell.isFlagged && flagsPlaced >= MINE_TOTAL) {
-    messageElement.textContent = '깃발은 10개까지만 놓을 수 있어요.';
-    return;
-  }
-
   cell.isFlagged = !cell.isFlagged;
   flagsPlaced += cell.isFlagged ? 1 : -1;
-  mineCountElement.textContent = String(MINE_TOTAL - flagsPlaced).padStart(2, '0');
+  mineCountElement.textContent = formatCounter(boardConfig.mines - flagsPlaced);
   renderCell(cell);
   messageElement.textContent = '주변을 살펴보고 안전한 칸을 찾아보세요.';
 }
 
+function chord(index) {
+  const cell = cells[index];
+  if (gameOver || !cell.isRevealed || cell.adjacentMines === 0) return;
+
+  const neighbors = getNeighbors(index);
+  const adjacentFlags = neighbors.filter((neighbor) => neighbor.isFlagged).length;
+  if (adjacentFlags !== cell.adjacentMines) return;
+
+  neighbors
+    .filter((neighbor) => !neighbor.isFlagged && !neighbor.isRevealed)
+    .forEach((neighbor) => {
+      if (!gameOver) revealCell(neighbor.index);
+    });
+}
+
 function renderCell(cell, wasHit = false) {
   const { element } = cell;
-  const row = Math.floor(cell.index / BOARD_SIZE) + 1;
-  const column = (cell.index % BOARD_SIZE) + 1;
+  const row = Math.floor(cell.index / boardConfig.columns) + 1;
+  const column = (cell.index % boardConfig.columns) + 1;
   element.className = 'cell';
 
   if (cell.isRevealed) {
@@ -188,11 +284,45 @@ function renderCell(cell, wasHit = false) {
   }
 }
 
+function getRecordKey() {
+  if (currentDifficulty !== 'custom') return `minesweeper-best-${currentDifficulty}`;
+  return `minesweeper-best-custom-${boardConfig.columns}x${boardConfig.rows}-${boardConfig.mines}`;
+}
+
+function readBestTime() {
+  try {
+    const value = Number(window.localStorage.getItem(getRecordKey()));
+    return Number.isInteger(value) && value >= 0 && value <= 999 ? value : null;
+  } catch {
+    return null;
+  }
+}
+
+function updateBestTime() {
+  const bestTime = readBestTime();
+  bestTimeElement.textContent = bestTime === null ? '---' : formatTime(bestTime);
+}
+
+function saveBestTime() {
+  const bestTime = readBestTime();
+  if (bestTime !== null && bestTime <= secondsElapsed) return;
+  try {
+    window.localStorage.setItem(getRecordKey(), String(secondsElapsed));
+    updateBestTime();
+  } catch {
+    messageElement.textContent = '기록을 저장할 수 없지만 게임은 계속할 수 있어요.';
+  }
+}
+
+function checkVictory() {
+  if (revealedCount === cells.length - boardConfig.mines) finishGame(true);
+}
+
 function finishGame(won) {
   gameOver = true;
   window.clearInterval(timerId);
   timerId = null;
-  resetFaceElement.textContent = won ? '★' : '×';
+  resetFaceElement.textContent = won ? '😎' : '😵';
   messageElement.textContent = won
     ? '탐사 성공! 모든 안전 구역을 찾았어요.'
     : '앗, 지뢰를 밟았어요. 다시 도전해보세요!';
@@ -207,6 +337,8 @@ function finishGame(won) {
     }
     cell.element.disabled = true;
   });
+
+  if (won) saveBestTime();
 }
 
 function resetGame() {
@@ -217,12 +349,58 @@ function resetGame() {
   timerId = null;
   gameStarted = false;
   gameOver = false;
-  mineCountElement.textContent = '10';
-  timerElement.textContent = '000';
-  resetFaceElement.textContent = '●';
+  mineCountElement.textContent = formatCounter(boardConfig.mines);
+  timerElement.textContent = formatTime(0);
+  resetFaceElement.textContent = '🙂';
   messageElement.textContent = '주변을 살펴보고 안전한 칸을 찾아보세요.';
+  updateBestTime();
   createBoard();
 }
 
+function applyDifficulty(key) {
+  currentDifficulty = key;
+  boardConfig = { ...DIFFICULTIES[key] };
+  customSettings.hidden = true;
+  resetGame();
+}
+
+difficultySelect.addEventListener('change', () => {
+  if (difficultySelect.value === 'custom') {
+    customSettings.hidden = false;
+    document.querySelector('#custom-width').focus();
+    return;
+  }
+  applyDifficulty(difficultySelect.value);
+});
+
+customSettings.addEventListener('submit', (event) => {
+  event.preventDefault();
+  const columns = Number(document.querySelector('#custom-width').value);
+  const rows = Number(document.querySelector('#custom-height').value);
+  const mines = Number(document.querySelector('#custom-mines').value);
+  const validDimensions = Number.isInteger(columns) && Number.isInteger(rows) &&
+    columns >= 5 && columns <= 30 && rows >= 5 && rows <= 30;
+  const validMineCount = Number.isInteger(mines) && mines >= 1 && mines < columns * rows;
+
+  if (!validDimensions || !validMineCount) {
+    messageElement.textContent = '가로·세로는 5~30, 지뢰는 칸 수보다 적게 입력해주세요.';
+    return;
+  }
+
+  boardConfig = { columns, rows, mines, label: '사용자 지정' };
+  currentDifficulty = 'custom';
+  customSettings.hidden = true;
+  resetGame();
+});
+
+flagModeButton.addEventListener('click', () => {
+  flagMode = !flagMode;
+  flagModeButton.setAttribute('aria-pressed', String(flagMode));
+  flagModeButton.querySelector('kbd').textContent = flagMode ? '켬' : '끔';
+});
+
 resetButton.addEventListener('click', resetGame);
+window.addEventListener('resize', updateBoardSizing);
 createBoard();
+updateBestTime();
+mineCountElement.textContent = formatCounter(boardConfig.mines);

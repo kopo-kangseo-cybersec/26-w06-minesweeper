@@ -24,8 +24,21 @@
             <p class="eyebrow">오늘의 탐사 구역</p>
             <h1 id="game-title">지뢰찾기<span class="title-period">.</span></h1>
           </div>
-          <div class="difficulty" aria-label="게임 난이도">초급 <span>9 × 9</span></div>
+          <label class="sr-only" for="difficulty-select">난이도</label>
+          <select class="difficulty-select" id="difficulty-select">
+            <option value="beginner">초급 · 9 × 9</option>
+            <option value="intermediate">중급 · 16 × 16</option>
+            <option value="expert">고급 · 30 × 16</option>
+            <option value="custom">사용자 지정</option>
+          </select>
         </div>
+
+        <form class="custom-settings" id="custom-settings" hidden>
+          <label>가로 <input id="custom-width" type="number" min="5" max="30" value="10" required /></label>
+          <label>세로 <input id="custom-height" type="number" min="5" max="30" value="10" required /></label>
+          <label>지뢰 <input id="custom-mines" type="number" min="1" max="899" value="15" required /></label>
+          <button type="submit">적용</button>
+        </form>
 
         <div class="game-status" aria-live="polite">
           <div class="counter" aria-label="남은 지뢰">
@@ -34,7 +47,7 @@
             <span class="counter-label">남음</span>
           </div>
           <button class="reset-button" id="reset-button" type="button" aria-label="새 게임 시작" title="새 게임 시작">
-            <span id="reset-face" aria-hidden="true">●</span>
+            <span id="reset-face" aria-hidden="true">🙂</span>
           </button>
           <div class="counter timer-counter" aria-label="경과 시간">
             <span class="counter-icon timer-icon" aria-hidden="true">◷</span>
@@ -43,13 +56,20 @@
           </div>
         </div>
 
+        <button class="flag-mode-button" id="flag-mode-button" type="button" aria-pressed="false">
+          <span aria-hidden="true">⚑</span> 깃발 모드 <kbd>끔</kbd>
+        </button>
+
         <div class="board-frame">
           <div class="board" id="board" role="grid" aria-label="9 곱하기 9 지뢰찾기 게임판"></div>
         </div>
 
         <footer class="game-footer">
           <p id="game-message">주변을 살펴보고 안전한 칸을 찾아보세요.</p>
-          <span class="board-coordinate" aria-hidden="true">FIELD MAP <b>09—A</b></span>
+          <div class="game-meta">
+            <span class="best-record">BEST <b id="best-time">---</b></span>
+            <span class="board-coordinate" aria-hidden="true">FIELD MAP <b id="board-size">09 × 09</b></span>
+          </div>
         </footer>
       </section>
 
