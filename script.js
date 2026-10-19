@@ -2,214 +2,227 @@ const BOARD_SIZE = 9;
 const MINE_TOTAL = 10;
 
 const boardElement = document.querySelector('#board');
-const mineCounter = document.querySelector('#mine-counter');
+const mineCountElement = document.querySelector('#mine-count');
 const timerElement = document.querySelector('#timer');
-const statusElement = document.querySelector('#game-status');
+const messageElement = document.querySelector('#game-message');
 const resetButton = document.querySelector('#reset-button');
-const modeButtons = document.querySelectorAll('.mode-button');
+const resetFaceElement = document.querySelector('#reset-face');
 
 let cells = [];
-let firstMove = true;
-let gameEnded = false;
-let elapsedSeconds = 0;
+let flagsPlaced = 0;
+let revealedCount = 0;
+let secondsElapsed = 0;
 let timerId = null;
-let inputMode = 'reveal';
+let gameStarted = false;
+let gameOver = false;
 
-function startGame() {
-  clearInterval(timerId);
+function createBoard() {
+  boardElement.replaceChildren();
   cells = Array.from({ length: BOARD_SIZE * BOARD_SIZE }, (_, index) => ({
-    row: Math.floor(index / BOARD_SIZE),
-    col: index % BOARD_SIZE,
-    mine: false,
-    adjacent: 0,
-    revealed: false,
-    flagged: false,
-    exploded: false,
+    index,
+    isMine: false,
+    isRevealed: false,
+    isFlagged: false,
+    adjacentMines: 0,
+    element: document.createElement('button'),
   }));
-  firstMove = true;
-  gameEnded = false;
-  elapsedSeconds = 0;
-  timerId = null;
-  inputMode = 'reveal';
-  timerElement.value = '000';
-  mineCounter.value = String(MINE_TOTAL).padStart(3, '0');
-  statusElement.textContent = '첫 칸을 열어 게임을 시작하세요.';
-  resetButton.textContent = '🙂';
-  resetButton.setAttribute('aria-label', '새 게임 시작');
-  setMode('reveal');
-  renderBoard();
-}
 
-function placeMines(safeRow, safeCol) {
-  const excluded = new Set();
-  for (let row = Math.max(0, safeRow - 1); row <= Math.min(BOARD_SIZE - 1, safeRow + 1); row += 1) {
-    for (let col = Math.max(0, safeCol - 1); col <= Math.min(BOARD_SIZE - 1, safeCol + 1); col += 1) {
-      excluded.add(row * BOARD_SIZE + col);
-    }
-  }
-
-  const candidates = cells.map((_, index) => index).filter((index) => !excluded.has(index));
-  for (let index = candidates.length - 1; index > 0; index -= 1) {
-    const swapIndex = Math.floor(Math.random() * (index + 1));
-    [candidates[index], candidates[swapIndex]] = [candidates[swapIndex], candidates[index]];
-  }
-
-  candidates.slice(0, MINE_TOTAL).forEach((index) => { cells[index].mine = true; });
   cells.forEach((cell) => {
-    if (cell.mine) return;
-    cell.adjacent = getNeighbors(cell).filter((neighbor) => neighbor.mine).length;
+    const row = Math.floor(cell.index / BOARD_SIZE) + 1;
+    const column = (cell.index % BOARD_SIZE) + 1;
+    cell.element.type = 'button';
+    cell.element.className = 'cell';
+    cell.element.setAttribute('role', 'gridcell');
+    cell.element.setAttribute('aria-label', `${row}행 ${column}열, 닫힘`);
+    cell.element.dataset.index = cell.index;
+    cell.element.addEventListener('click', () => revealCell(cell.index));
+    cell.element.addEventListener('contextmenu', (event) => {
+      event.preventDefault();
+      toggleFlag(cell.index);
+    });
+    boardElement.append(cell.element);
   });
 }
 
-function getNeighbors(cell) {
+function placeMines(firstIndex) {
+  const availableIndices = cells
+    .map((cell) => cell.index)
+    .filter((index) => index !== firstIndex);
+
+  for (let index = availableIndices.length - 1; index > 0; index -= 1) {
+    const randomIndex = Math.floor(Math.random() * (index + 1));
+    [availableIndices[index], availableIndices[randomIndex]] = [
+      availableIndices[randomIndex],
+      availableIndices[index],
+    ];
+  }
+
+  availableIndices.slice(0, MINE_TOTAL).forEach((index) => {
+    cells[index].isMine = true;
+  });
+
+  cells.forEach((cell) => {
+    if (!cell.isMine) {
+      cell.adjacentMines = getNeighbors(cell.index).filter((neighbor) => neighbor.isMine).length;
+    }
+  });
+}
+
+function getNeighbors(index) {
+  const row = Math.floor(index / BOARD_SIZE);
+  const column = index % BOARD_SIZE;
   const neighbors = [];
-  for (let row = Math.max(0, cell.row - 1); row <= Math.min(BOARD_SIZE - 1, cell.row + 1); row += 1) {
-    for (let col = Math.max(0, cell.col - 1); col <= Math.min(BOARD_SIZE - 1, cell.col + 1); col += 1) {
-      if (row !== cell.row || col !== cell.col) neighbors.push(cells[row * BOARD_SIZE + col]);
+
+  for (let rowOffset = -1; rowOffset <= 1; rowOffset += 1) {
+    for (let columnOffset = -1; columnOffset <= 1; columnOffset += 1) {
+      if (rowOffset === 0 && columnOffset === 0) continue;
+      const neighborRow = row + rowOffset;
+      const neighborColumn = column + columnOffset;
+      if (
+        neighborRow >= 0 && neighborRow < BOARD_SIZE &&
+        neighborColumn >= 0 && neighborColumn < BOARD_SIZE
+      ) {
+        neighbors.push(cells[neighborRow * BOARD_SIZE + neighborColumn]);
+      }
     }
   }
+
   return neighbors;
 }
 
-function renderBoard() {
-  const fragment = document.createDocumentFragment();
-  cells.forEach((cell, index) => {
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'cell';
-    button.setAttribute('role', 'gridcell');
-    button.setAttribute('aria-label', `행 ${cell.row + 1}, 열 ${cell.col + 1}, 닫힘`);
-    button.dataset.index = String(index);
-    button.addEventListener('click', () => handleCellClick(index));
-    button.addEventListener('contextmenu', (event) => {
-      event.preventDefault();
-      toggleFlag(index);
-    });
-    fragment.append(button);
-  });
-  boardElement.replaceChildren(fragment);
+function startTimer() {
+  if (timerId !== null) return;
+  gameStarted = true;
+  timerId = window.setInterval(() => {
+    secondsElapsed = Math.min(secondsElapsed + 1, 999);
+    timerElement.textContent = String(secondsElapsed).padStart(3, '0');
+  }, 1000);
 }
 
-function updateBoard() {
-  cells.forEach((cell, index) => {
-    const button = boardElement.children[index];
-    button.className = 'cell';
-    button.textContent = '';
-    button.removeAttribute('data-number');
-
-    if (cell.revealed) {
-      button.classList.add('is-open');
-      if (cell.mine) {
-        button.textContent = '✹';
-        button.classList.add('is-mine');
-        if (cell.exploded) button.setAttribute('aria-label', `행 ${cell.row + 1}, 열 ${cell.col + 1}, 폭발한 지뢰`);
-        else button.setAttribute('aria-label', `행 ${cell.row + 1}, 열 ${cell.col + 1}, 지뢰`);
-      } else if (cell.adjacent > 0) {
-        button.textContent = String(cell.adjacent);
-        button.dataset.number = String(cell.adjacent);
-        button.setAttribute('aria-label', `행 ${cell.row + 1}, 열 ${cell.col + 1}, 주변 지뢰 ${cell.adjacent}개`);
-      } else {
-        button.setAttribute('aria-label', `행 ${cell.row + 1}, 열 ${cell.col + 1}, 빈 칸`);
-      }
-    } else if (cell.flagged) {
-      button.textContent = '⚑';
-      button.classList.add('is-flagged');
-      button.setAttribute('aria-label', `행 ${cell.row + 1}, 열 ${cell.col + 1}, 깃발 표시`);
-    } else {
-      button.setAttribute('aria-label', `행 ${cell.row + 1}, 열 ${cell.col + 1}, 닫힘`);
-    }
-
-    if (gameEnded) {
-      if (cell.flagged && !cell.mine) {
-        button.textContent = '×';
-        button.classList.add('is-wrong');
-      } else if (cell.mine && !cell.flagged) {
-        button.textContent = '✹';
-        button.classList.add('is-mine');
-      }
-      button.disabled = true;
-    } else {
-      button.disabled = cell.revealed;
-    }
-  });
-}
-
-function handleCellClick(index) {
-  if (gameEnded) return;
-  if (inputMode === 'flag') {
-    toggleFlag(index);
-    return;
-  }
-
+function revealCell(index) {
   const cell = cells[index];
-  if (cell.revealed || cell.flagged) return;
-  if (firstMove) {
-    placeMines(cell.row, cell.col);
-    firstMove = false;
-    timerId = setInterval(() => {
-      elapsedSeconds += 1;
-      timerElement.value = String(Math.min(elapsedSeconds, 999)).padStart(3, '0');
-    }, 1000);
-  }
-  revealCell(cell);
-}
+  if (gameOver || cell.isRevealed || cell.isFlagged) return;
 
-function revealCell(startCell) {
-  if (startCell.mine) {
-    startCell.revealed = true;
-    startCell.exploded = true;
-    endGame(false);
+  if (!gameStarted) {
+    placeMines(index);
+    startTimer();
+  }
+
+  if (cell.isMine) {
+    cell.isRevealed = true;
+    renderCell(cell, true);
+    finishGame(false);
     return;
   }
 
+  revealSafeArea(cell);
+  if (revealedCount === cells.length - MINE_TOTAL) {
+    finishGame(true);
+  }
+}
+
+function revealSafeArea(startCell) {
   const pending = [startCell];
+
   while (pending.length > 0) {
     const cell = pending.pop();
-    if (cell.revealed || cell.flagged || cell.mine) continue;
-    cell.revealed = true;
-    if (cell.adjacent === 0) pending.push(...getNeighbors(cell));
-  }
+    if (cell.isRevealed || cell.isFlagged || cell.isMine) continue;
 
-  updateBoard();
-  if (cells.filter((cell) => cell.revealed).length === BOARD_SIZE * BOARD_SIZE - MINE_TOTAL) endGame(true);
+    cell.isRevealed = true;
+    revealedCount += 1;
+    renderCell(cell);
+
+    if (cell.adjacentMines === 0) {
+      getNeighbors(cell.index).forEach((neighbor) => {
+        if (!neighbor.isRevealed && !neighbor.isFlagged) pending.push(neighbor);
+      });
+    }
+  }
 }
 
 function toggleFlag(index) {
   const cell = cells[index];
-  if (gameEnded || cell.revealed) return;
-  if (!cell.flagged && cells.filter((item) => item.flagged).length >= MINE_TOTAL) return;
-  cell.flagged = !cell.flagged;
-  const flagCount = cells.filter((item) => item.flagged).length;
-  mineCounter.value = String(MINE_TOTAL - flagCount).padStart(3, '0');
-  updateBoard();
-}
+  if (gameOver || cell.isRevealed) return;
 
-function endGame(won) {
-  gameEnded = true;
-  clearInterval(timerId);
-  if (won) {
-    cells.filter((cell) => cell.mine).forEach((cell) => { cell.flagged = true; });
-    mineCounter.value = '000';
-    statusElement.textContent = `완벽합니다. ${elapsedSeconds}초 만에 모든 지뢰를 찾았습니다.`;
-    resetButton.textContent = '😎';
-  } else {
-    statusElement.textContent = '지뢰를 밟았습니다. 새 게임으로 다시 도전하세요.';
-    resetButton.textContent = '😵';
+  if (!cell.isFlagged && flagsPlaced >= MINE_TOTAL) {
+    messageElement.textContent = '깃발은 10개까지만 놓을 수 있어요.';
+    return;
   }
-  resetButton.setAttribute('aria-label', '다시 시작');
-  updateBoard();
+
+  cell.isFlagged = !cell.isFlagged;
+  flagsPlaced += cell.isFlagged ? 1 : -1;
+  mineCountElement.textContent = String(MINE_TOTAL - flagsPlaced).padStart(2, '0');
+  renderCell(cell);
+  messageElement.textContent = '주변을 살펴보고 안전한 칸을 찾아보세요.';
 }
 
-function setMode(mode) {
-  inputMode = mode;
-  modeButtons.forEach((button) => {
-    const active = button.dataset.mode === mode;
-    button.classList.toggle('is-active', active);
-    button.setAttribute('aria-pressed', String(active));
+function renderCell(cell, wasHit = false) {
+  const { element } = cell;
+  const row = Math.floor(cell.index / BOARD_SIZE) + 1;
+  const column = (cell.index % BOARD_SIZE) + 1;
+  element.className = 'cell';
+
+  if (cell.isRevealed) {
+    element.classList.add('revealed');
+    if (cell.isMine) {
+      element.textContent = '✹';
+      element.classList.add(wasHit ? 'mine-hit' : 'mine-shown');
+      element.setAttribute('aria-label', `${row}행 ${column}열, 지뢰`);
+    } else if (cell.adjacentMines > 0) {
+      element.textContent = String(cell.adjacentMines);
+      element.classList.add(`number-${cell.adjacentMines}`);
+      element.setAttribute('aria-label', `${row}행 ${column}열, 주변 지뢰 ${cell.adjacentMines}개`);
+    } else {
+      element.textContent = '';
+      element.setAttribute('aria-label', `${row}행 ${column}열, 빈 칸`);
+    }
+    return;
+  }
+
+  element.textContent = cell.isFlagged ? '⚑' : '';
+  if (cell.isFlagged) {
+    element.classList.add('flagged');
+    element.setAttribute('aria-label', `${row}행 ${column}열, 깃발 표시됨`);
+  } else {
+    element.setAttribute('aria-label', `${row}행 ${column}열, 닫힘`);
+  }
+}
+
+function finishGame(won) {
+  gameOver = true;
+  window.clearInterval(timerId);
+  timerId = null;
+  resetFaceElement.textContent = won ? '★' : '×';
+  messageElement.textContent = won
+    ? '탐사 성공! 모든 안전 구역을 찾았어요.'
+    : '앗, 지뢰를 밟았어요. 다시 도전해보세요!';
+
+  cells.forEach((cell) => {
+    if (cell.isMine && !cell.isRevealed) {
+      cell.isRevealed = true;
+      renderCell(cell);
+    } else if (!cell.isMine && cell.isFlagged) {
+      cell.element.textContent = '×';
+      cell.element.classList.add('wrong-flag');
+    }
+    cell.element.disabled = true;
   });
-  document.querySelector('.control-hint').textContent = mode === 'reveal' ? '칸을 여세요' : '표시할 칸을 선택하세요';
 }
 
-resetButton.addEventListener('click', startGame);
-modeButtons.forEach((button) => button.addEventListener('click', () => setMode(button.dataset.mode)));
-startGame();
+function resetGame() {
+  window.clearInterval(timerId);
+  flagsPlaced = 0;
+  revealedCount = 0;
+  secondsElapsed = 0;
+  timerId = null;
+  gameStarted = false;
+  gameOver = false;
+  mineCountElement.textContent = '10';
+  timerElement.textContent = '000';
+  resetFaceElement.textContent = '●';
+  messageElement.textContent = '주변을 살펴보고 안전한 칸을 찾아보세요.';
+  createBoard();
+}
+
+resetButton.addEventListener('click', resetGame);
+createBoard();
