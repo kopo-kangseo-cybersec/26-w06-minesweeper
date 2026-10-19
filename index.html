@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#008080" />
+    <title>지뢰찾기</title>
+    <link rel="stylesheet" href="style.css" />
+    <script src="script.js" defer></script>
+  </head>
+  <body>
+    <main class="game-card">
+      <header class="game-header">
+        <p class="eyebrow">MINESWEEPER</p>
+        <h1>지뢰찾기</h1>
+        <p class="instructions">안전한 칸을 열고, 지뢰가 있는 곳에는 깃발을 꽂으세요.</p>
+      </header>
+
+      <section class="game-options" aria-label="게임 설정">
+        <label class="difficulty-control" for="difficulty">
+          난이도
+          <select id="difficulty">
+            <option value="beginner">초급 · 9×9 · 지뢰 10개</option>
+            <option value="intermediate">중급 · 16×16 · 지뢰 40개</option>
+            <option value="expert">고급 · 16×30 · 지뢰 99개</option>
+          </select>
+        </label>
+        <button id="sound-toggle" class="sound-button" type="button" aria-pressed="false">
+          사운드 끔
+        </button>
+      </section>
+
+      <section class="game-panel" aria-label="게임 정보">
+        <div class="counter" aria-label="남은 지뢰 수">
+          <span class="counter-icon" aria-hidden="true">⚑</span>
+          <span id="mine-count" class="counter-value">10</span>
+          <span class="counter-label">남은 지뢰</span>
+        </div>
+        <button id="new-game" class="reset-button" type="button" aria-label="새 게임 시작">🙂</button>
+        <div class="counter timer" aria-label="경과 시간">
+          <span class="counter-icon" aria-hidden="true">◷</span>
+          <span id="timer" class="counter-value">000</span>
+          <span class="counter-label">초</span>
+        </div>
+      </section>
+
+      <section class="record-panel" aria-label="난이도별 최고 기록">
+        <span id="record-label">초급 최고 기록</span>
+        <strong id="best-time">기록 없음</strong>
+      </section>
+
+      <p id="game-status" class="game-status" role="status" aria-live="polite">
+        칸을 열어 게임을 시작하세요.
+      </p>
+
+      <div class="board-scroll">
+        <div
+          id="board"
+          class="board"
+          role="grid"
+          aria-label="9행 9열 지뢰찾기 게임판"
+        ></div>
+      </div>
+
+      <footer class="game-footer">
+        <span>좌클릭: 칸 열기</span>
+        <span aria-hidden="true">·</span>
+        <span>우클릭: 깃발 표시</span>
+      </footer>
+    </main>
+  </body>
+</html>
