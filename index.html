@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#edf6ef" />
+    <title>지뢰찾기 | Field 09</title>
+    <link rel="stylesheet" href="style.css" />
+    <script src="script.js" defer></script>
+  </head>
+  <body>
+    <main class="game-shell">
+      <header class="masthead">
+        <a class="wordmark" href="./" aria-label="Field 09 처음으로">
+          <span class="wordmark-mark" aria-hidden="true">💣</span>
+          <h1 id="game-title">지뢰찾기</h1>
+        </a>
+        <div class="window-actions" aria-hidden="true"><span>_</span><span>□</span><span>×</span></div>
+      </header>
+
+      <nav class="menu-bar" aria-label="게임 메뉴"><span>게임</span><span>도움말</span></nav>
+
+      <section class="game-panel" aria-label="지뢰찾기 게임">
+        <div class="game-heading">
+          <label class="sr-only" for="difficulty-select">난이도</label>
+          <select class="difficulty-select" id="difficulty-select">
+            <option value="beginner">초급 · 9 × 9</option>
+            <option value="intermediate">중급 · 16 × 16</option>
+            <option value="expert">고급 · 30 × 16</option>
+            <option value="custom">사용자 지정</option>
+          </select>
+        </div>
+
+        <form class="custom-settings" id="custom-settings" hidden>
+          <label>가로 <input id="custom-width" type="number" min="5" max="30" value="10" required /></label>
+          <label>세로 <input id="custom-height" type="number" min="5" max="30" value="10" required /></label>
+          <label>지뢰 <input id="custom-mines" type="number" min="1" max="899" value="15" required /></label>
+          <button type="submit">적용</button>
+        </form>
+
+        <div class="game-status" aria-live="polite">
+          <div class="counter" aria-label="남은 지뢰">
+            <span class="counter-icon" aria-hidden="true">⚑</span>
+            <span id="mine-count">10</span>
+            <span class="counter-label">남음</span>
+          </div>
+          <button class="reset-button" id="reset-button" type="button" aria-label="새 게임 시작" title="새 게임 시작">
+            <span id="reset-face" aria-hidden="true">🙂</span>
+          </button>
+          <div class="counter timer-counter" aria-label="경과 시간">
+            <span class="counter-icon timer-icon" aria-hidden="true">◷</span>
+            <span id="timer">000</span>
+            <span class="counter-label">초</span>
+          </div>
+        </div>
+
+        <div class="mark-modes" aria-label="칸 표시 모드">
+          <button class="flag-mode-button" id="flag-mode-button" type="button" aria-pressed="false">
+            <span aria-hidden="true">⚑</span> 깃발 모드 <kbd>끔</kbd>
+          </button>
+          <button class="question-mode-button" id="question-mode-button" type="button" aria-pressed="false">
+            <span aria-hidden="true">?</span> 물음표 <kbd>끔</kbd>
+          </button>
+        </div>
+
+        <div class="board-frame">
+          <div class="board" id="board" role="grid" aria-label="9 곱하기 9 지뢰찾기 게임판"></div>
+        </div>
+
+        <footer class="game-footer">
+          <p id="game-message">주변을 살펴보고 안전한 칸을 찾아보세요.</p>
+          <div class="game-meta">
+            <span class="best-record">BEST <b id="best-time">---</b></span>
+            <span class="board-coordinate" aria-hidden="true">FIELD MAP <b id="board-size">09 × 09</b></span>
+          </div>
+        </footer>
+      </section>
+
+      <div class="bottom-note" aria-hidden="true">
+        <span>STAY CURIOUS</span>
+        <span class="note-line"></span>
+        <span>WATCH YOUR STEP</span>
+      </div>
+    </main>
+  </body>
+</html>
