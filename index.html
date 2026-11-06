@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#c0c0c0" />
+    <title>지뢰찾기</title>
+    <link rel="stylesheet" href="style.css" />
+    <script src="script.js" defer></script>
+  </head>
+  <body>
+    <main class="game">
+      <header class="game__header">
+        <h1>지뢰찾기</h1>
+        <label class="difficulty-control" for="difficulty">
+          난이도
+          <select id="difficulty">
+            <option value="beginner">초급</option>
+            <option value="intermediate">중급</option>
+            <option value="expert">상급</option>
+          </select>
+        </label>
+      </header>
+
+      <section class="game__panel" aria-label="지뢰찾기 게임">
+        <div class="game__toolbar">
+          <div class="counter" aria-label="남은 지뢰 수">
+            <output class="counter__value" id="mine-counter" aria-live="polite">010</output>
+          </div>
+          <button class="reset-button" id="reset-button" type="button" aria-label="새 게임 시작">
+            <svg aria-hidden="true" viewBox="0 0 24 24">
+              <path d="M20 7v5h-5M19.2 12a7.2 7.2 0 1 1-2.1-5.1L20 10" />
+            </svg>
+          </button>
+          <div class="counter counter--timer" aria-label="경과 시간">
+            <output class="counter__value" id="timer" aria-live="off">000</output>
+          </div>
+        </div>
+
+        <div class="board-frame">
+          <div
+            class="board"
+            id="board"
+            role="grid"
+            aria-label="초급 9행 9열 지뢰찾기 보드"
+            aria-describedby="game-status"
+          ></div>
+        </div>
+
+        <div class="game__footer">
+          <p class="game-status" id="game-status" aria-live="polite">칸을 열어 게임을 시작하세요.</p>
+          <p class="game-hint">좌클릭: 열기 <span class="hint-divider">·</span> 우클릭: 깃발 / 물음표</p>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
